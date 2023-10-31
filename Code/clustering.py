@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def cluster_events_by_type(data, types):
 
@@ -33,3 +34,28 @@ def cluster_and_epoch(subject, onsets, fs, epoch_limits, baseline_limits):
             baseline_end_index = int(np.round(float(onsets[type][i]) * fs + baseline_samples[1]))     # end index of the baseline within the epoch
             baseline_mean = np.mean(subject["EEG"][0:n_chan, baseline_start_index:baseline_end_index+1], 1)   # mean value of the baseline for each channel
             subject['epochs'][type][:,:,i] = subject["EEG"][0:n_chan, start_index:end_index+1] - baseline_mean.reshape((67,1))
+
+
+def calc_ERP(subject):
+
+    subject['ERP'] = {}
+
+    for type in set(subject['epochs'].keys()):
+        
+        subject['ERP'][type] = np.average(subject['epochs'][type], 2)
+
+
+def plot_ERP(ERP, channels):
+    
+    plt.figure
+    plt.rcParams['figure.figsize'] = (15,int(np.ceil(len(channels)/3))*3)
+
+    for i in range(len(channels)):
+        t = np.linspace(-6, 2, len(ERP[i,:]))
+        plt.subplot(int(np.ceil(len(channels)/3)), 3, i+1)
+        plt.plot(t, ERP[i,:])
+        plt.xlabel('t (s)')
+        plt.ylabel('V (x1e-5)')
+        plt.title('channel ' + str(channels[i]))
+    
+    plt.show()
