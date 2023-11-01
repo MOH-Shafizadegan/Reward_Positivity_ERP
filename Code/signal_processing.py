@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 import numpy as np
+from sklearn.decomposition import FastICA
 
 def plot_spectrum(data, fs):
 
@@ -10,6 +11,7 @@ def plot_spectrum(data, fs):
     f = np.linspace(0, fs/2, len(P)) # The frequency array
 
     # Plot the spectrum
+    plt.figure
     plt.plot(f, P)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Power (dB)')
@@ -25,3 +27,20 @@ def bp_filter(data, f_low, f_high, order, fs):
     filtered_data = signal.filtfilt(b, a, data)
 
     return filtered_data
+
+def remove_ICA(data, Th):
+    # Run ICA on your data
+    ica = FastICA(n_components=data.shape[1]) # we want *all* the components
+    ica.fit(data)
+
+    # Decompose your data into independent components
+    components = ica.transform(data) # shape = (n_samples, n_components)
+
+    remove_indices = list(np.where(np.max(components, 0) > Th))
+
+    # "remove" unwanted components by setting them to 0 - simplistic but gets the job done
+    components[:, remove_indices] = 0
+
+    #reconstruct signal
+    return ica.inverse_transform(components)
+
